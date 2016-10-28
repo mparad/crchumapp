@@ -31,11 +31,10 @@
 				scope[name].future.push(next)
 			}
 			
-			
 			if (!scope[name].func) {
 				scope[name].func = 'loading';
 				var script = document.createElement('script');
-				script.src = 'app/' + name + '.js';
+				script.src = 'modules/' + name + '.js';
 				script.async = true;
 				document.head.appendChild(script);
 			} else if (typeof scope[name].func === 'function'){
@@ -50,16 +49,20 @@
 			var nModules = modulesNames.length;
 			var nModulesLoaded = 0;
 			var modulesValues = new Array(nModules);
-			for (i = 0; i < nModules; i++ ) {
-				(function (j) {
-					singleRef(modulesNames[j], function (moduleValue) {
-						modulesValues[j] = moduleValue;
-						nModulesLoaded++;
-						if (nModulesLoaded == nModules) {
-							next.apply(null, modulesValues);
-						}
-					});
-				}(i));
+			if (nModules === 0) {
+				next();
+			} else {
+				for (i = 0; i < nModules; i++ ) {
+					(function (j) {
+						singleRef(modulesNames[j], function (moduleValue) {
+							modulesValues[j] = moduleValue;
+							nModulesLoaded++;
+							if (nModulesLoaded == nModules) {
+								next.apply(null, modulesValues);
+							}
+						});
+					}(i));
+				}
 			}
 		};
 		

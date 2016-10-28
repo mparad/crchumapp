@@ -29,21 +29,9 @@ var http = require('http');
 var path = require('path');
 var url = require('url');
 
-function handler(req, res) {
-	var pathname = url.parse(req.url).pathname.split('/').filter(function (subs) {
-		return subs !== '';
-	});
-	var body = [];
-	req.on('data', function(dataPart) {
-		body.push(dataPart);
-	});
-	req.on('error', function() {
-		errorHandler(req, res, 500, 'Connection Error');
-	});
-	req.on('end', function() {
-		body = Buffer.concat(body).toString();
-		RESTHandler(req, res, pathname, RESTArchitecture, body);
-	});
+function errorHandler(req, res, statusCode, message) {
+	res.statusCode = statusCode;
+	res.end(message);
 }
 
 function stringHandler(req, res, str) {
@@ -55,12 +43,51 @@ function stringHandler(req, res, str) {
 	}
 }
 
-function errorHandler(req, res, statusCode,message) {
-	res.statusCode = statusCode;
-	res.end(message);
+function fsHandler(rootDir) {
+	return function(req, res, pathname, body) {
+		var filePath = __dirname + path.sep + rootDir + path.sep + pathname.join(path.sep);
+		
+		fs.stat(filePath, function (err, stats) {
+			if (err) {
+				errorHandler(req, res, 404, 'File Not Found : ' + req.url);
+			} else if (stats.isDirectory()) {
+				fs.readdir(filePath, 'utf8', function (err, data) {
+					if (err) {
+						errorHandler(req, res, 404, 'File Not Found : ' + req.url);
+					} else {
+						res.statusCode = 200;
+						res.end(data, 'utf8');
+					}
+				});
+				
+			} else {
+				fs.readFile(filePath, 'utf8', function (err, data) {
+					if (err) {
+						errorHandler(req, res, 404, 'File Not Found : ' + req.url);
+					} else {
+						res.statusCode = 200;
+						res.end(data, 'utf8');
+					}
+				});
+			}
+		})
+		
+		
+		// fs.readFile(filePath, 'utf8', function (err, data) {
+			// if (err) {
+				// errorHandler(req, res, 404, 'File Not Found : ' + req.url);
+			// } else {
+				// res.statusCode = 200;
+				// res.end(data, 'utf8');
+			// }
+		// });
+		
+		
+		
+	}
 }
 
-function RESTHandler(req, res, pathname, arch, body) {
+function restHandler(req, res, pathname, arch, body) {
 	var firstPathElement = pathname.length > 0 ? pathname[0] : 'index';
 	if (arch[firstPathElement]) {
 		if (typeof arch[firstPathElement] === 'function') {
@@ -68,48 +95,51 @@ function RESTHandler(req, res, pathname, arch, body) {
 		} else if (typeof arch[firstPathElement] === 'string') {
 			stringHandler(req, res, arch[firstPathElement]);
 		} else {
-			RESTHandler(req, res, pathname.slice(1), arch[firstPathElement], body)
+			restHandler(req, res, pathname.slice(1), arch[firstPathElement], body)
 		}
 	} else {
 		errorHandler(req, res, 404, 'Resource not found : ' + req.url);
 	}
 }
 
-function staticHandler(rootDir) {
-	return function(req, res, pathname, body) {
-		var filePath = __dirname + path.sep + rootDir + path.sep + pathname.join(path.sep);
-		fs.readFile(filePath, 'utf8', function (err, data) {
-			if (err) {
-				errorHandler(req, res, 404, 'File Not Found : ' + req.url);
-			} else {
-				res.statusCode = 200;
-				res.end(data, 'utf8');
+//function dbHandler() {};
+
+function startServer(portNumber, appArchitecture, userErrorHandler){
+	if (userErrorHandler) {
+		errorHandler = userErrorHandler;
+	}
+	function handler(req, res) {
+		var pathname = url.parse(req.url).pathname.split('/').filter(function (subs) {
+			return subs !== '';
+		});
+		var body = [];
+		req.on('data', function(dataPart) {
+			console.log(dataPart.toString());
+			body.push(dataPart);
+		});
+		req.on('error', function() {
+			errorHandler(req, res, 500, 'Connection Error');
+		});
+		req.on('end', function() {
+			body = Buffer.concat(body).toString();
+			if (body) {
+				body = JSON.parse(body);
 			}
+			restHandler(req, res, pathname, appArchitecture, body);
 		});
 	}
+	var server = http.createServer(handler);
+	server.listen(portNumber);
 }
 
-function dbHandler() {};
 
-var httpStub = '<!DOCTYPE html><html>'+
-	'<head><meta charset="utf-8"/><title>Biobanque</title>' +
-	'<script src="app/modules.js"></script>' + 
-	'<script src="app/main.js"></script>' + 
-	'</head>' +
-	'<body></body>'+
-	'<html>';
-
-var RESTArchitecture = {
-	index: httpStub,
-	app: staticHandler('app'), 
-	db: dbHandler
-	
-	
+module.exports = {
+	start: startServer,
+	fs: fsHandler
 }
 
-var server = http.createServer(handler);
 
-server.listen(2000);
+
 
 
 

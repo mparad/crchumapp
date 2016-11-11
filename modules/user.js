@@ -1,6 +1,6 @@
 (function () {
-	_modules.ref(['html', 'tree', 'req'], 
-		function (html, tree, req) {
+	_modules.ref(['html', 'tree', 'req', 'check'], 
+		function (html, tree, req, check) {
 			
 			function init(session) {
 			
@@ -9,6 +9,7 @@
 				var userTitle = new html.element({tag: 'textDiv', value: ''});
 					
 				var userInfoPanel = new tree.node({
+					menu: true,
 					label: '',
 					line: [userTitle],
 					coll: [
@@ -24,10 +25,35 @@
 				
 				userInfoPanel.fold();
 				
-				var loginInput = new html.element({tag: 'input'});
-				var pwdInput = new html.element({tag: 'input'});
+				
+				var validateButton = new html.element({
+					tag: 'button', 
+					onclick: function (){
+						loginReq(loginInput.value(), pwdInput.value());							
+					},
+					disabled: true,
+					value: 'Valider'
+				});
+				
+				function checkValidateButton(){
+					var ok = check(loginInput.value()).strlen().min(3).true() &&
+						check(pwdInput.value()).strlen().min(0).true();
+					console.log(ok);
+					validateButton.active(ok);
+				}
+				
+				var pwdInput = new html.element({
+					tag: 'input',
+					listener: checkValidateButton
+				});
+				
+				var loginInput = new html.element({
+					tag: 'input',
+					listener: checkValidateButton
+				});
 				
 				var loginNode = new tree.node({
+					menu: 200,
 					label: 'Ouvrir la session',
 					coll: [
 						new html.element({
@@ -48,13 +74,7 @@
 								new html.element({tag: 'textDiv', value: 'Mot de passe'}),
 								pwdInput
 							]}),
-						new html.element({
-							tag: 'button', 
-							onclick: function (){
-								loginReq(loginInput.value(), pwdInput.value());							
-							},
-							value: 'Valider'
-						}),
+						validateButton
 					]					
 				})
 				
@@ -72,6 +92,7 @@
 					} 
 					loginInput.value('');
 					pwdInput.value('');
+					checkValidateButton();
 					session = {};
 				}
 				
@@ -85,11 +106,10 @@
 						session.apps.forEach(function(app){
 							_modules.ref([app], 
 								function (init) {
-									console.log('INITSEP')
 									var appObject = init(session);
 									appNodes.push(appObject);
 									userNode.coll.add(appObject);
-									appObject.fold();
+									appObject.unfold();
 								}
 							);							
 						});
@@ -126,15 +146,8 @@
 					root: true,
 					label: 'Usager', 				
 					line: [loginNode],
-					// coll: [
-						// //new html.element({tag: 'textDiv', value: 'Important text'}), 
-						// new tree.node({
-							// label: 'Usager',
-							// coll: [
-								// new html.element({tag: 'textDiv', value: 'Boaz Lahav'}), 
-							// ]
-						// })
-					// ]					
+					coll: [
+					]					
 				});	
 				
 			}

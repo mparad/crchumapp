@@ -15,7 +15,8 @@
 					// 'text-align': 'center',
 				 }, 
 				'div': {
-					'font': '12px sans-serif',
+					'font': '12px monospace',
+					'white-space': 'pre'
 				},
 				'input': {
 					'padding': '0px',
@@ -24,7 +25,9 @@
 					'width': '150px'
 				},
 				'select': {
-					'border': 'none'
+					'border': 'none',
+					'font': '12px monospace',
+					'white-space': 'pre'
 				},
 				'.hdiv': {
 					display: 'flex', 
@@ -72,12 +75,12 @@
 				
 				obj.line = new html.element({
 					tag: 'hdiv',
-					children: []				
+					children: []
 				});
 				
 				obj.header = new html.element({
 					tag: 'hdiv',
-					children: [obj.label, obj.line]				
+					children: specs.label ? [obj.label, obj.line] : [obj.line]	
 				});
 				
 				obj.coll = new html.element({
@@ -85,9 +88,14 @@
 					children: []
 				});
 				
+				obj.collContainer = new html.element({
+					tag: 'vdiv',
+					children: [obj.coll]
+				});
+				
 				obj.right = new html.element({
 					tag: 'vdiv',
-					children: [obj.header, obj.coll]
+					children: [obj.header, obj.collContainer]
 				});
 				
 				obj.main = new html.element({
@@ -110,6 +118,16 @@
 					});
 				}
 				
+				obj.menu = specs.menu;
+				
+				if (obj.menu) {
+					obj.coll.style({
+						position: 'absolute',
+						'z-index': obj.menu + '',
+						'background-color': '#FFFFFF'
+					});
+				}
+				
 				obj.fold();
 				
 				return obj;
@@ -122,7 +140,16 @@
 				var obj = this;
 				if (obj.folded) {
 					obj.foldButton.value(obj.coll.children().length === 0 ? '' : '-');
-					obj.right.add(obj.coll);
+					obj.right.add(obj.collContainer);
+					if (obj.menu) {
+						obj.coll.style({
+							'border': '1px solid black',
+							'border-top': 'none',
+							'padding-right': '5px',
+							'padding-bottom': '5px'
+							});
+					}
+						
 					obj.folded = false;
 				}
 			}	
@@ -131,7 +158,10 @@
 				var obj = this;
 				if (!obj.folded) {
 					obj.foldButton.value(obj.coll.children().length === 0 ? '' : '+');
-					obj.right.remove(obj.coll);
+					obj.right.remove(obj.collContainer);
+					if (obj.menu) {
+						obj.coll.style({'border': 'none'});
+					}
 					obj.folded = true;
 				}
 			}

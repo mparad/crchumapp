@@ -14,8 +14,26 @@ var users = {
 		userinfo: {
 			fullname: 'Boaz Lahav',
 		},
-		pwd: '123',
+		pwd: '47dj47dj',
 		groups: ['med'],
+		apps: ['sep']
+	},
+	clarochelle: {
+		token: 110,
+		userinfo: {
+			fullname: 'Catherine Larochelle'
+		},
+		pwd: 'fffff',
+		groups: ['med'],
+		apps: ['sep']
+	},
+	admin: {
+		token: 1100,
+		userinfo: {
+			fullname: 'Administrateur',
+		},
+		pwd: 'admin',
+		groups: ['admin'],
 		apps: ['sep']
 	}
 };

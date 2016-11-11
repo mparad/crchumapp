@@ -15,17 +15,13 @@
 					root: true,
 					value: 'Biobanque CHUM',
 					style: {
-						'font': '25px sans-serif',
+						'font': '25px monospace',
 						'margin-bottom': '20px'
 					}
 				});
 				
-				
-				
 				var userApp = user(session);
-				
-				
-		
+						
 			}
 		);
 	}

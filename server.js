@@ -114,7 +114,6 @@ function startServer(portNumber, appArchitecture, userErrorHandler){
 		});
 		var body = [];
 		req.on('data', function(dataPart) {
-			console.log(dataPart.toString());
 			body.push(dataPart);
 		});
 		req.on('error', function() {
@@ -123,7 +122,11 @@ function startServer(portNumber, appArchitecture, userErrorHandler){
 		req.on('end', function() {
 			body = Buffer.concat(body).toString();
 			if (body) {
-				body = JSON.parse(body);
+				try {
+					body = JSON.parse(body);
+				} catch (err) {
+					body = null;
+				}
 			}
 			restHandler(req, res, pathname, appArchitecture, body);
 		});

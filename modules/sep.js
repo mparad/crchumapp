@@ -1,6 +1,6 @@
 (function () {
-	_modules.ref(['html', 'tree', 'req', 'sepdoc'], 
-		function (html, tree, req, sepdoc) {
+	_modules.ref(['html', 'tree', 'req', 'sepdoc', 'check'], 
+		function (html, tree, req, sepdoc, check) {
 
 			function init(session){
 				
@@ -223,38 +223,159 @@
 					
 				// }
 				
+				//var 
+				
+				var samples = [];
+				
+				function checkNewButton(){
+					var ok = check(ramqInput.value()).strlen().eq(12).true() &&
+						 check(sampleDateInput.value()).datemaxnow().true();
+					addSampleButton.active(ok);
+				}
+				
+				var ramqInput = new html.element({
+					tag: 'input',
+					listener: checkNewButton
+				});
+				
+				var sampleDateInput = new html.element({
+					tag: 'input', 
+					type: 'date',
+					listener: checkNewButton
+				});
+				
 				var addSampleButton = new html.element({
 					tag: 'button', 
 					onclick: function(){
-						msSamples.coll.add(new sepdoc.sample(msSamples.coll, 100000 + msSamples.coll.length));
-						msSamples.unfold();
+						addSample(ramqInput.value(), sampleDateInput.value());
+						
 					},
+					disabled: true,
 					value: 'Nouveau'
 				});
+								
+				function addSample(ramqNumber, sampleDate){
+					var newSample;
+					req({
+						method: 'POST',
+						url: 'ramq',
+						data: {ramq: ramqNumber},
+						err: console.log,
+						next: function(response){
+							var ramqId = response.data.ramqId;
+							
+							var existingSampleIds = samples.map(function(sample){
+								return sample.data.sampleId.value();
+							});
+							//console.log(existingSampleIds);
+							if (existingSampleIds.indexOf(ramqId + sampleDate) === -1) {
+								newSample = new sepdoc.sample(
+								 msSamples.coll, ramqId, sampleDate
+								);
+								msSamples.coll.add(newSample);
+								samples.push(newSample);
+								ramqInput.value('');
+								sampleDateInput.value('');
+								checkNewButton();
+								addSampleMenu.fold();
+							} else {
+								ramqInput.value('');
+								sampleDateInput.value('');
+								checkNewButton();
+							}
+						}
+					})
+				};
+						
+				var addSampleMenu = new tree.node({
+					menu: 150,
+					label: 'Nouveau',
+					coll: [
+						new html.element({
+							tag: 'hdiv', 
+							style: {
+							'justify-content': 'space-between'
+							},
+							children: [
+								new html.element({tag: 'textDiv', value: 'RAMQ'}),
+								ramqInput
+							]
+						}),
+						new html.element({
+							tag: 'hdiv', 
+							style: {
+								'justify-content': 'space-between'
+							},
+							children: [
+								new html.element({tag: 'textDiv', value: 'Date'}),
+								sampleDateInput
+							]}),
+						addSampleButton,
+					]			
+					
+				});
+				
+				/*var dummySample = new sepdoc.sample(null, 'NULL');
+				
+				var sampleFieldKeys = Object.keys(dummySample.data);
+				var sampleFieldNames = sampleFieldKeys.map(function(key) {
+					return dummySample.data[key].name();
+				})
+				console.log(sampleFieldKeys);
+				
+				
+				var sortColumn = new tree.node({
+					menu: 120,
+					label: 'ID Patient',
+					coll: sampleFieldNames.map(function (fieldName) {
+						return new html.element({
+							tag: 'textDiv',
+							value: fieldName
+						})
+					})
+				});
+				
+				var sortColumns = new html.element({
+					tag: 'hdiv',
+					children: [sortColumn] //, sortColumnB, sortColumnC]
+					
+				})*/
+				
+				
 				
 				var msSamples = new tree.node({
 					label: 'Échantillons',
-					line: [addSampleButton]
+					//line: [sortColumns]
 				});
 				
 				var msApp = new tree.node({
 					label: 'Sclérose en plaques',
-					//coll: [msFilters, msSorts, msSamples]				
+					//coll: [msFilters, msSorts, msSamples]			
+					line: [addSampleMenu],
 					coll: [msSamples]				
 				});
 				
-				// req({
-					// method: 'GET',
-					// url: 'db/sep',
-					// next: function(res){
-						// console.log(res);
-						
-					// },
-					// err: function(err){
-						// console.log(err);
-						
-					// }
-				// })
+				req({
+					method: 'GET',
+					url: 'db/sep',
+					next: function(res){
+						//console.log(res.data);
+						res.data.forEach(function (sampleId) {
+							//console.log(sampleId);
+							var newSample = new sepdoc.sample(msSamples.coll, sampleId);
+							newSample.get();
+							msSamples.coll.add(newSample);
+							samples.push(newSample);
+							
+						});
+						msSamples.unfold();
+					
+					},
+					err: function(err){
+						console.log(err);
+					}
+				});	
+					
 				
 				return msApp;
 				

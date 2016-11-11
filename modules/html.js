@@ -33,8 +33,7 @@
 				obj._dom = document.createElement('div');
 				obj._dom.className = 'textDiv',
 				obj._dom.appendChild(obj.textObj);
-				break;
-			
+				break;			
 			case 'button': 
 				obj.textObj = document.createTextNode(specs.value);
 				obj._dom = document.createElement('button');
@@ -63,6 +62,15 @@
 						obj.add(child);
 					});
 					break;
+				// case 'validation': 
+					// obj._validation = specs.validation;
+					// break;
+				case 'listener': 
+					obj._listener = specs.listener;
+					obj._dom.onchange = function (evt) {
+						obj._listener(obj);
+					};
+					break;
 				case 'style':
 					Object.keys(specs.style).forEach(function(styleParam){
 						obj._dom.style[styleParam] = specs.style[styleParam];
@@ -78,6 +86,10 @@
 					break;
 			}
 		});
+		
+		// if (obj._listener) {
+			// obj._listener(obj);
+		// }
 		
 		return obj;
 	}
@@ -104,11 +116,38 @@
 		return obj._dom.childNodes;
 	}
 				
+	element.prototype.active = function(val){
+		var obj = this;
+		obj._dom.disabled = !val;
+	}			
+				
 	element.prototype.style = function(specs) {
 		var obj = this;
-		Object.keys(specs).forEach(function(styleParam){
-			obj._dom.style[styleParam] = specs[styleParam];
-		});
+		if (typeof specs === 'string') {
+			return obj._dom.style[specs];
+		} else {
+			Object.keys(specs).forEach(function(styleParam){
+				obj._dom.style[styleParam] = specs[styleParam];
+			});
+		}
+	}
+				
+	// element.prototype.validate = function() {
+		// var obj = this;
+		// //console.log('validate' + obj.value());
+		// if (obj._validation) {
+			// console.log(obj._valid);
+			// obj._valid = obj._validation(obj);
+			// obj.style({
+				// 'background-color': obj._valid ? '#FFFFFF' : 'FFDDDD'
+			// });
+		// } else {
+			// obj._valid = true;
+		// }
+	// }	
+				
+	element.prototype.valid = function() {
+		return this._valid;
 	}
 				
 	element.prototype.value = function(arg){
@@ -138,6 +177,9 @@
 					optionIndex = options.indexOf(arg);
 					obj._dom.options.selectedIndex = optionIndex;
 					break;
+			}
+			if (obj._listener) {
+				obj._listener(obj);
 			}
 		} else {
 			switch (obj.tag) {

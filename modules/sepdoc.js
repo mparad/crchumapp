@@ -2,10 +2,33 @@
 	_modules.ref(['html', 'tree', 'req'], 
 		function (html, tree, req) {
 
+			var meds = {
+				ga: 'GA (glatiramer acetate)', 
+				ifn1aavonex:	'IFNb-1a (Avonex)',
+				ifn1aplegridy:	'IFNb-1a (Plegridy)',
+				ifn1arebif:	'IFNb-1a (Rebif)',
+				ifn1bbetaseron:	'IFNb-1b (Betaseron)',
+				ifn1bextavia:	'IFNb-1b (Extavia)',
+				tf:	'TF (teriflunomide)', 
+				dmf:	'DMF (dimethyl fumarate)', 
+				fty:	'FTY (fingolimod)',
+				ntz:	'NTZ (natalizumab)', 
+				lmt:	'LMT (alemtuzumab)', 
+				mitox:	'Mitoxantrone', 
+				mtx:	'Méthotrexate',
+				cyclo:	'Cyclophosphamide', 
+				imuran:	'Azathioprine', 
+				anticd20:	'Anti-CD20', 
+				plex:	'PLEX', 
+				ivig:	'IVIg', 
+				cortico:	'Corticostéroïdes', 
+			};
+		
+		
 			function field(name, controlSpecs, validation){
 				var obj = this;
 									
-				var fieldName = new html.element({
+				obj.fieldName = new html.element({
 					tag: 'textDiv', 
 					value: name
 				});
@@ -19,7 +42,7 @@
 					style: {
 						'justify-content': 'space-between'
 					},
-					children: [fieldName, obj.control]
+					children: [obj.fieldName, obj.control]
 					
 				});
 			}
@@ -34,12 +57,49 @@
 				}
 			};
 				
-			function sample(root, sampleId) {
+			field.prototype.name = function(){
+				var obj = this;
+				return obj.fieldName.value();
+			};
+				
+			function sample(root, id, sampleDateArg) {
 				var obj = this;
 				var data;
 				obj.data = {};
+				var dataLine = new html.element({
+					tag: 'textDiv', 
+					value: ''
+				});
 				data = obj.data;
 				obj.root = root;
+				
+				var patientId, sampleDate;
+				
+				if (sampleDateArg) {
+					patientId = id;
+					sampleDate = sampleDateArg;
+					data.sampleDate = new field('Date du prélèvement', {
+						tag: 'input', 
+						type: 'date',
+						value: sampleDate,
+						listener: updateDataLine
+					});
+					data.patientId = new field('ID Patient', {
+						tag: 'textDiv', 
+						value: patientId
+					});
+					data.sampleId = new field('', {tag: 'textDiv', value: patientId + sampleDate});				
+				} else {
+					data.sampleDate = new field('Date du prélèvement', {
+						tag: 'input', 
+						type: 'date',
+						listener: updateDataLine
+					});
+					data.patientId = new field('ID Patient', {
+						tag: 'textDiv'
+					});
+					data.sampleId = new field('', {tag: 'textDiv', value: id});
+				}
 				
 				var closeButton = new html.element({
 					tag: 'button', 
@@ -49,24 +109,63 @@
 					}
 				});
 				
-				data.sampleId = sampleId;
-				data.patientId = new field('ID Patient', {tag: 'input'});
+				function format(str, maxl) {
+					var strout;
+					if (str.length > maxl) {
+						return str.substr(0, maxl - 3) + '...'
+					} else if (str.length === maxl) {
+						return str;
+					} else {
+						return str + (new Array(maxl - str.length).fill(' ').join(''));
+					}
+				}
 				
-				data.birthDate = new field('Date de naissance', {tag: 'input', type: 'date'});
+				function updateDataLine() {
+					// console.log([
+						// format(data.patientId.value(), 16),
+						// format(data.sampleDate.value(), 10),
+						// format(data.birthDate.value(), 10),
+						// format(data.sex.value(), 2) 
+					// ].join('  '))
+					
+					data.sampleId.value(data.patientId.value() + data.sampleDate.value());
+					dataLine.value([
+						format(data.patientId.value(), 14),
+						format(data.sampleDate.value(), 10),
+						format(data.birthDate.value(), 10),
+						format(data.sex.value(), 2),
+						format(data.dx.value(), 10) 
+					].join('  '));
+				}
+				
+				
+				
+				data.birthDate = new field('Date de naissance', {
+					tag: 'input', 
+					type: 'date',
+					listener: updateDataLine
+					});
 				data.birthPlace = new field('Lieu de naissance', {tag: 'input'});
-				data.sex = new field('Sexe', {tag: 'select', 'choices': ['M', 'F']});
-				data.msFamilialHistory = new field('Histoire familiale',{tag: 'select', 'choices': ['Oui', 'Non']});
+				data.sex = new field('Sexe', {tag: 'select', 'choices': [' ', 'M', 'F'], 
+					listener: updateDataLine});
+				data.msFamilialHistory = new field('Histoire familiale',{tag: 'select', 'choices': [' ', 'Oui', 'Non']});
 				data.weight = new field('Poids (kg)', {tag: 'input'});
 				data.height = new field('Taille (cm)', {tag: 'input'});
-				data.ethnicity = new field('Ethnicité', {tag: 'select', 'choices': [
+				data.ethnicity = new field('Ethnicité', {tag: 'select', 'choices': [' ', 
 					'Caucasien', 'Noir', 'Asiatique', 'Autochtone', 'Inconnu'
 				]});
-				data.tobaccoUse = new field('Tabagisme', {tag: 'select', 'choices': ['Oui', 'Non']});
-				data.previousPregnancies = new field('Grossesses antérieures', {tag: 'select', 'choices': [
-					'1', '2', '3', '4', '5 ou +'
+				data.tobaccoUse = new field('Tabagisme', {tag: 'select', 'choices': [' ', 'Oui', 'Non']});
+				data.previousPregnancies = new field('Grossesses antérieures', {
+					tag: 'select', 
+					'choices': [
+					' ', 'Non', '1', '2', '3', '4', '5 ou +'
 				]});
 			
-				data.dx = new field('Diagnostic', {tag: 'select', 'choices': [
+				data.dx = new field('Diagnostic', {
+					tag: 'select', 
+					listener: updateDataLine,
+					'choices': [
+					' ',
 					'MS possible',
 					'RIS',
 					'CIS',
@@ -93,66 +192,85 @@
 				data.lastMRIReport = new field('Rapport de la dernière IRM', {tag: 'textarea'});
 				data.firstMRIDate = new field('Date de la première IRM', {tag: 'input', type: 'date'});
 				data.firstMRIReport = new field('Rapport de la première IRM', {tag: 'textarea'});
-				data.ocb = new field('BOC', {tag: 'select', 'choices': ['Positif', 'Négatif']});
-				data.index = new field('Index', {tag: 'select', 'choices': ['Positif', 'Négatif']});
+				data.ocb = new field('BOC', {tag: 'select', 'choices': [' ', 'Positif', 'Négatif']});
+				data.index = new field('Index', {tag: 'select', 'choices': [' ', 'Positif', 'Négatif']});
 				data.wbcCrl = new field('Leucocytes LCR', {tag: 'input'});
 				data.proteinsCrl = new field('Protéinurie LCR', {tag: 'input'});
 				data.otherNonInflammatoryDiseases = new field('Autres maladies non-inflammatoires', {tag: 'input'});
 				data.otherInflammatoryDiseases = new field('Autres maladies inflammatoires', {tag: 'input'});
 				
 				data.currentDmt = new field('Traitement actuel', {tag: 'select', choices: [
-					'GA', 'IFNb', 'TF', 'DMF', 'FTY', 
-					'NTZ', 'LMT', 'MITOX', 'Cyclophosphamide', 'Azathioprine', 
-					'Anti-CD20', 'PLEX', 'IVIg', 'Corticostéroïdes', 'Protocole de recherche', 
+					' ',
+					meds.ga,
+					meds.ifn1aavonex,
+					meds.ifn1aplegridy,
+					meds.ifn1arebif,
+					meds.ifn1bbetaseron,
+					meds.ifn1bextavia,
+					meds.tf,
+					meds.dmf,
+					meds.fty,
+					meds.ntz,
+					meds.lmt,
+					meds.mitox,
+					meds.mtx,
+					meds.cyclo,
+					meds.imuran,
+					meds.anticd20,
+					meds.plex,
+					meds.ivig,
+					meds.cortico,
+					'Protocole de recherche', 
 					'Autre'] });
 					
 				data.currentDmtDate = new field('Date de début du traitement actuel', {tag: 'input', type: 'date'});
 				
-				data.previousGA = new field('GA', {tag: 'input', type: 'checkbox'});
-				data.previousIFNb = new field('IFNb', {tag: 'input', type: 'checkbox'});
-				data.previousTF = new field('TF', {tag: 'input', type: 'checkbox'});
-				data.previousDMF = new field('DMF', {tag: 'input', type: 'checkbox'});
-				data.previousFTY = new field('FTY', {tag: 'input', type: 'checkbox'});
-				data.previousNTZ = new field('NTZ', {tag: 'input', type: 'checkbox'});
-				data.previousLMT = new field('LMT', {tag: 'input', type: 'checkbox'});
-				data.previousMitox = new field('Mitox', {tag: 'input', type: 'checkbox'});
-				data.previousCyclophosphamide = new field('Cyclophosphamide', {tag: 'input', type: 'checkbox'});
-				data.previousAzathioprine = new field('Azathioprine', {tag: 'input', type: 'checkbox'});
-				data.previousAntiCD20 = new field('Anti-CD20', {tag: 'input', type: 'checkbox'});
-				data.previousPLEX = new field('PLEX', {tag: 'input', type: 'checkbox'});
-				data.previousIVIg = new field('IVIg', {tag: 'input', type: 'checkbox'});
-				data.previousCorticosteroids = new field('Corticostéroïdes', {tag: 'input', type: 'checkbox'});
+				data.previousGa = new field(meds.ga, {tag: 'input', type: 'checkbox'});
+				data.previousIfn1aavonex = new field(meds.ifn1aavonex, {tag: 'input', type: 'checkbox'});
+				data.previousIfn1aplegridy = new field(meds.ifn1aplegridy, {tag: 'input', type: 'checkbox'});
+				data.previousIfn1arebif = new field(meds.ifn1arebif, {tag: 'input', type: 'checkbox'});
+				data.previousIfn1bbetaseron = new field(meds.ifn1bbetaseron, {tag: 'input', type: 'checkbox'});
+				data.previousIfn1bextavia = new field(meds.ifn1bextavia, {tag: 'input', type: 'checkbox'});
+				
+				data.previousTf = new field(meds.tf, {tag: 'input', type: 'checkbox'});
+				data.previousDmf = new field(meds.dmf, {tag: 'input', type: 'checkbox'});
+				data.previousFty = new field(meds.fty, {tag: 'input', type: 'checkbox'});
+				data.previousNtz = new field(meds.ntz, {tag: 'input', type: 'checkbox'});
+				data.previousLmt = new field(meds.lmt, {tag: 'input', type: 'checkbox'});
+				data.previousMitox = new field(meds.mitox, {tag: 'input', type: 'checkbox'});
+				data.previousMtx = new field(meds.mtx, {tag: 'input', type: 'checkbox'});
+				
+				data.previousCyclo = new field(meds.cyclo, {tag: 'input', type: 'checkbox'});
+				data.previousImuran = new field(meds.imuran, {tag: 'input', type: 'checkbox'});
+				data.previousAnticd20 = new field(meds.anticd20, {tag: 'input', type: 'checkbox'});
+				data.previousPlex = new field(meds.plex, {tag: 'input', type: 'checkbox'});
+				data.previousIvig = new field(meds.ivig, {tag: 'input', type: 'checkbox'});
+				data.previousCortico = new field(meds.cortico, {tag: 'input', type: 'checkbox'});
 				data.previousResearchProtocol = new field('Protocole de recherche', {tag: 'input'});
 				data.previousOther	 = new field('Autre(s)', {tag: 'textarea'});
 					
 				data.firstDmtDate = new field('Date du premier traitement', {tag: 'input', type: 'date'});
 				data.otherMedication = new field('Autre médication', {tag: 'textarea'});
-				data.lastCorticoDmt = new field('Date du dernier traitement aux corticostéroïdes', {tag: 'input', type: 'date'});
-				data.vitamins = new field('Vitamines', {tag: 'select', 'choices': ['D1', 'Non']});
+				data.lastCorticoDmt = new field('Date du dernier tx corticos.', {tag: 'input', type: 'date'});
+				data.vitamins = new field('Vitamines', {tag: 'select', 'choices': [' ', 'D1', 'Non']});
 				data.supplements = new field('Suppléments', {tag: 'textarea'});
-				
-				data.sampleDate = new field('Date du prélèvement', {tag: 'input', type: 'date'});
+							
 				data.yellowTubes = new field('Nombre de tubes lavande prélevés', {tag: 'input'});
 				data.goldenTubes = new field('Nombre de tubes dorés prélevés', {tag: 'input'});
 				data.pbmc = new field('Nombre de PBMC congelés(x 10E6)', {tag: 'input'});
 				data.pbmcLocation = new field('Localisation des PBMC ', {tag: 'input'});
 				data.serumTubes = new field('Nombre de tubes de sérum congelés', {tag: 'input'});
-				data.serumTubesLocation = new field('Localisationi des tubes de sérum', {tag: 'input'});
+				data.serumTubesLocation = new field('Localisation des tubes de sérum', {tag: 'input'});
 				data.dryCulots = new field('Nombre de culots secs congelés', {tag: 'input'});
 				data.dryCulotsLocation = new field('Localisation des culots secs', {tag: 'input'});
 				
 				tree.node.call(obj, {
-					line: [
-						//closeButton,
-						new html.element({
-							tag: 'textDiv', 
-							value: 'X2345XXXS'
-						})
+					menu: 100,
+					line: [dataLine],
 					
-					], 
 					coll: [
 						new tree.node({
-							label: 'Patient',
+							label: 'Personnel',
 							coll: [
 								data.patientId,
 								data.birthDate,
@@ -167,7 +285,7 @@
 							]
 						}),
 						new tree.node({
-							label: 'Maladie',
+							label: 'Pathologie',
 							coll: [
 								data.dx,
 								data.dxDate,
@@ -197,22 +315,28 @@
 								data.currentDmt,
 								data.currentDmtDate,
 								new tree.node({
+									menu: true,
 									label: 'Traitements antérieurs',
 									coll: [
-										data.previousGA,
-										data.previousIFNb,
-										data.previousTF,
-										data.previousDMF,
-										data.previousFTY,
-										data.previousNTZ,
-										data.previousLMT,
+										data.previousGa,
+										data.previousIfn1aavonex,
+										data.previousIfn1aplegridy,
+										data.previousIfn1arebif,
+										data.previousIfn1bbetaseron,
+										data.previousIfn1bextavia,
+										data.previousTf,
+										data.previousDmf,
+										data.previousFty,
+										data.previousNtz,
+										data.previousLmt,
 										data.previousMitox,
-										data.previousCyclophosphamide,
-										data.previousAzathioprine,
-										data.previousAntiCD20,
-										data.previousPLEX,
-										data.previousIVIg,
-										data.previousCorticosteroids,
+										data.previousMtx,
+										data.previousCyclo,
+										data.previousImuran,
+										data.previousAnticd20,
+										data.previousPlex,
+										data.previousIvig,
+										data.previousCortico,
 										data.previousResearchProtocol,
 										data.previousOther
 									]
@@ -253,26 +377,27 @@
 			
 			sample.prototype.load = function(dataObj) {
 				var obj = this;
-				Object.keys(obj).forEach(function(prop){
+				Object.keys(dataObj).forEach(function(prop){
 					obj.data[prop].value(dataObj[prop]);
 				});
 			}
 			
 			sample.prototype.save = function() {
+				var obj = this;
 				var outputObj = {}
 				Object.keys(obj.data).forEach(function(prop) {
 					if (obj.data.hasOwnProperty(prop)) {
 						outputObj[prop] = obj.data[prop].value();
 					}
 				});
-				console.log(outputObj)
+				return outputObj;
 			}
 			
-			sample.prototype.get = function(sampleId) {
+			sample.prototype.get = function(sampleIdArg) {
 				var obj = this;
 				req({
 					method: 'GET',
-					url: 'db/sep/' + obj.sampleId,
+					url: 'db/sep/' + (sampleIdArg ? sampleIdArg : obj.data.sampleId.value()),
 					next: function(response){
 						obj.load(response.data);
 					},
@@ -286,7 +411,7 @@
 				var obj = this;
 				req({
 					method: 'PUT',
-					url: 'db/sep/' + obj.sampleId,
+					url: 'db/sep/' + obj.data.sampleId.value(),
 					data: obj.save(),
 					next: function(response){
 						

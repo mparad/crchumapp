@@ -1,6 +1,10 @@
+
+var fs = require('fs');
+var path = require('path');
+
 function init(rootDir) {
 	
-	var rootDir = root;
+	var rootDir = rootDir;
 	
 	function errorHandler(req, res, statusCode, message) {
 		res.statusCode = statusCode;
@@ -15,8 +19,9 @@ function init(rootDir) {
 			case 'PUT':
 				fs.stat(filePath, function (err, stats) { 
 					if (err || stats.isFile()) {
-						fs.writeFile(filePath, body, function (err) {
+						fs.writeFile(filePath, JSON.stringify(body), function (err) {
 							if (err) {
+								console.log(err);
 								errorHandler(req, res, 403, 'Forbidden');
 							} else {
 								res.statusCode = 200;
@@ -40,7 +45,7 @@ function init(rootDir) {
 								errorHandler(req, res, 404, 'File Not Found : ' + req.url);
 							} else {
 								res.statusCode = 200;
-								res.end(data, 'utf8');
+								res.end(JSON.stringify(data), 'utf8');
 							}
 						});
 						

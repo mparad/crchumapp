@@ -395,7 +395,7 @@
 			
 			sample.prototype.get = function(sampleIdArg) {
 				var obj = this;
-				req({
+				req('send', {
 					method: 'GET',
 					url: 'db/sep/' + (sampleIdArg ? sampleIdArg : obj.data.sampleId.value()),
 					next: function(response){
@@ -404,12 +404,12 @@
 					err: function(errMsg) {
 						console.log(errMsg);
 					}
-				})
+				});
 			}
 			
 			sample.prototype.put = function() {
 				var obj = this;
-				req({
+				req('send', {
 					method: 'PUT',
 					url: 'db/sep/' + obj.data.sampleId.value(),
 					data: obj.save(),
@@ -419,8 +419,7 @@
 					err: function(errMsg) {
 						console.log(errMsg);
 					}
-					
-				})
+				});
 				
 			}
 		

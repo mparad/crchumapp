@@ -4,12 +4,6 @@
 		_modules.ref(['tree', 'html', 'user'], 
 			function (tree, html, user ) {
 				
-				var session = {
-					userinfo: null,
-					token: null
-				};
-				
-				
 				var title = new html.element({
 					tag: 'textDiv', 
 					root: true,
@@ -20,7 +14,7 @@
 					}
 				});
 				
-				var userApp = user(session);
+				var userApp = user();
 						
 			}
 		);

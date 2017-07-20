@@ -2,7 +2,7 @@
 	_modules.ref(['html', 'tree', 'req', 'check'], 
 		function (html, tree, req, check) {
 			
-			function init(session) {
+			function init() {
 			
 				var appNodes = [];
 			
@@ -38,7 +38,6 @@
 				function checkValidateButton(){
 					var ok = check(loginInput.value()).strlen().min(3).true() &&
 						check(pwdInput.value()).strlen().min(0).true();
-					console.log(ok);
 					validateButton.active(ok);
 				}
 				
@@ -81,7 +80,7 @@
 				loginNode.fold();
 				
 				function logout() {
-					if (session.token) {
+					if (req('session').token) {
 						appNodes.forEach(function(app){
 							userNode.coll.remove(app);
 						});
@@ -93,20 +92,21 @@
 					loginInput.value('');
 					pwdInput.value('');
 					checkValidateButton();
-					session = {};
+					req('logout');
 				}
 				
-				function login(){
-					if (session.token) {
-						userTitle.value(session.userinfo.fullname);
+				function login(data){
+					req('login', data);
+					if (req('session').token) {
+						userTitle.value(req('session').userinfo.fullname);
 						loginNode.fold();
 						userNode.line.replace(userInfoPanel, loginNode);
 						appNodes = [];
 						
-						session.apps.forEach(function(app){
+						req('session').apps.forEach(function(app){
 							_modules.ref([app], 
 								function (init) {
-									var appObject = init(session);
+									var appObject = init();
 									appNodes.push(appObject);
 									userNode.coll.add(appObject);
 									appObject.unfold();
@@ -118,7 +118,7 @@
 				}
 				
 				function loginReq(username, pwd) {
-					req({
+					req('send', {
 						method: 'POST', 
 						url: 'login',
 						data: {
@@ -127,10 +127,7 @@
 						},
 						next: function(response) {
 							if (response.data && response.data.token) {
-								session.token = response.data.token;
-								session.userinfo = response.data.userinfo;
-								session.apps = response.data.apps;
-								login();
+								login(response.data);
 							} else {
 								logout();
 							}

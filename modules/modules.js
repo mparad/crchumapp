@@ -68,7 +68,8 @@
 		
 		return {
 			add: add, 
-			ref: ref
+			ref: ref,
+			scope: scope
 		};
 		
 	})();

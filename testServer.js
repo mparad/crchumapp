@@ -1,6 +1,6 @@
-var process = require('process');
+
 var server = require('./server.js');
-var login = require('./login.js');
+var auth = require('./auth.js');
 var db = require('./db.js');
 var ramq = require('./ramq.js');
 
@@ -12,18 +12,7 @@ var httpStub = '<!DOCTYPE html><html>'+
 	'<body></body>'+
 	'<html>';
 
-var testResponseData = 'XXXXXXXWWWWWWWW';	
-	
-function errorRedirect() {
-	
-} 
-	
-function handleLogin(req, res, pathname, body) {
-	
-	
-}	
-	
-
+var testResponseData = 'BIOBANQUE';	
 	
 var args = process.argv;
 
@@ -39,9 +28,9 @@ try {
 	server.start(port, {
 		index: httpStub,
 		modules: server.fs('modules'), 
-		login: login,
+		login: auth.login,
 		test: testResponseData,
-		db: db.init('dbtest'),
+		db: db.init('dbtest', auth),
 		ramq: ramq.handler
 	});		
 	console.log('Biobanque server started on port ' + port);

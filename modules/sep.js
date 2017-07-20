@@ -2,7 +2,7 @@
 	_modules.ref(['html', 'tree', 'req', 'sepdoc', 'check'], 
 		function (html, tree, req, sepdoc, check) {
 
-			function init(session){
+			function init(){
 				
 				// var alzhApp = new tree.node({
 					// label: 'Alzheimer',
@@ -256,7 +256,7 @@
 								
 				function addSample(ramqNumber, sampleDate){
 					var newSample;
-					req({
+					req('send', {
 						method: 'POST',
 						url: 'ramq',
 						data: {ramq: ramqNumber},
@@ -284,7 +284,7 @@
 								checkNewButton();
 							}
 						}
-					})
+					});
 				};
 						
 				var addSampleMenu = new tree.node({
@@ -355,7 +355,7 @@
 					coll: [msSamples]				
 				});
 				
-				req({
+				req('send', {
 					method: 'GET',
 					url: 'db/sep',
 					next: function(res){

@@ -1,6 +1,6 @@
 (function () {
-	_modules.ref(['html', 'req'], 
-		function (html, req) {
+	_modules.ref(['html'], 
+		function (html) {
 				
 			html.style({
 				 'button': { 

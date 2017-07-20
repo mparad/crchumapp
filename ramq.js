@@ -17,7 +17,6 @@ function encodeRamq(str) {
 }	
 	
 function handler(req, res, pathname, body){
-	console.log('here')
 	var ramq = body.ramq;
 	if (typeof ramq != 'string' || ramq.length != 12) {
 		res.statusCode = 400;
